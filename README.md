@@ -11,7 +11,7 @@ Add `durstr` to `Cargo.toml`:
 
 ```toml
 [dependencies]
-durstr = "0.4.0"
+durstr = "0.5.0"
 ```
 
 This library provides a `parse` function for quick and easy parsing, and a `Parser` struct for more control over parsing behavior.
@@ -35,7 +35,7 @@ For more control, you can use the `Parser` struct directly. For example, to pars
 use durstr::{Parser, ParserOptions};
 use std::time::Duration;
 
-let parser = Parser::new(ParserOptions { ignore_case: true, ..Default::default() });
+let parser = Parser::new(ParserOptions::default().ignore_case(true));
 let dur = parser.parse("1 MINUTE, 2 SECONDS");
 assert_eq!(dur, Ok(Duration::from_secs(62)));
 ```
@@ -59,10 +59,7 @@ use std::time::Duration;
 let mut units = ParserUnits::default();
 units.add_unit("days", Duration::from_secs(3600) * 24);
 
-let parser = Parser::new(ParserOptions {
-    units,
-    ..Default::default()
-});
+let parser = Parser::new(ParserOptions::default().with_units(units));
 
 let d = parser.parse("4 days");
 assert_eq!(d, Ok(Duration::from_secs(3600) * 24 * 4));
