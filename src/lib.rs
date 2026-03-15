@@ -29,7 +29,7 @@ For more control, you can use the [`Parser`] struct directly. For example, to pa
 use durstr::{Parser, ParserOptions};
 use std::time::Duration;
 
-let options = ParserOptions { ignore_case: true, ..Default::default() };
+let options = ParserOptions::default().ignore_case(true);
 let parser = Parser::new(options);
 
 let dur = parser.parse("1 MINUTE, 2 SECONDS");
@@ -56,10 +56,7 @@ use std::time::Duration;
 let mut units = ParserUnits::default();
 units.add_unit("days", Duration::from_secs(3600) * 24);
 
-let parser = Parser::new(ParserOptions {
-    units,
-    ..Default::default()
-});
+let parser = Parser::new(ParserOptions::default().with_units(units));
 
 let d = parser.parse("4 days");
 assert_eq!(d, Ok(Duration::from_secs(3600) * 24 * 4));
@@ -83,6 +80,9 @@ pub enum Error {
     /// A number was expected, but not found.
     #[error("expected a number")]
     ExpectedNumber,
+    /// A number was too large.
+    #[error("number was too large: {0}")]
+    Overflow(String),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -113,7 +113,7 @@ impl<'a> Scanner<'a> {
                     self.chars.next();
                 }
                 c if c.is_ascii_digit() => {
-                    tokens.push(Token::Number(self.scan_number(i)));
+                    tokens.push(Token::Number(self.scan_number(i)?));
                 }
                 c if c.is_ascii_alphabetic() => {
                     tokens.push(Token::Unit(self.scan_unit(i)));
@@ -129,16 +129,19 @@ impl<'a> Scanner<'a> {
         c.is_ascii_whitespace() || c == ','
     }
 
-    fn scan_number(&mut self, start: usize) -> u32 {
+    fn scan_number(&mut self, start: usize) -> Result<u32, Error> {
         let mut end = start;
         while let Some((_, c)) = self.chars.peek() {
             if !c.is_ascii_digit() {
                 break;
             }
+            // peek guarantees this won't panic
             end = self.chars.next().unwrap().0;
         }
 
-        self.source[start..=end].parse().unwrap()
+        self.source[start..=end]
+            .parse()
+            .map_err(|_e| Error::Overflow(self.source[start..=end].to_string()))
     }
 
     fn scan_unit(&mut self, start: usize) -> &'a str {
@@ -160,24 +163,25 @@ impl<'a> Scanner<'a> {
 /// ```rust
 /// use durstr::{Parser, ParserOptions, ParserUnits};
 /// use std::time::Duration;
-/// 
+///
 /// let mut units = ParserUnits::default();
 /// units.add_unit("days", Duration::from_secs(3600) * 24);
-/// 
-/// let parser = Parser::new(ParserOptions {
-///     units,
-///     ..Default::default()
-/// });
-/// 
+///
+/// let parser = Parser::new(ParserOptions::default().with_units(units));
+///
 /// let d = parser.parse("4 days");
 /// assert_eq!(d, Ok(Duration::from_secs(3600) * 24 * 4));
 /// ```
 pub struct ParserUnits {
-    values: HashMap<&'static str, Duration>,
+    values: HashMap<String, Duration>,
 }
 
 impl ParserUnits {
-    /// Returns a ParserUnits with no default units (empty map).
+    /// Returns a [`ParserUnits`] with no units.
+    ///
+    /// Unlike [`ParserUnits::default`], this does not include the built-in units
+    /// (hours, minutes, seconds, milliseconds). Use this when you want full control
+    /// over which units are available.
     pub fn new() -> Self {
         ParserUnits {
             values: HashMap::new(),
@@ -194,8 +198,8 @@ impl ParserUnits {
     /// let mut units = ParserUnits::default();
     /// units.add_unit("day", Duration::from_secs(3600) * 24);
     /// ```
-    pub fn add_unit(&mut self, k: &'static str, v: Duration) {
-        self.values.insert(k, v);
+    pub fn add_unit(&mut self, k: impl Into<String>, v: Duration) {
+        self.values.insert(k.into(), v);
     }
 
     fn get_duration(&self, k: &str) -> Option<&Duration> {
@@ -237,8 +241,22 @@ impl Default for ParserUnits {
 /// interpreted. (e.g. enabling case-insensitivity)
 #[derive(Default)]
 pub struct ParserOptions {
-    pub ignore_case: bool,
-    pub units: ParserUnits,
+    ignore_case: bool,
+    units: ParserUnits,
+}
+
+impl ParserOptions {
+    /// Enable the ignore_case flag for these options.
+    pub fn ignore_case(mut self, ignore: bool) -> Self {
+        self.ignore_case = ignore;
+        self
+    }
+
+    /// Provide custom units for these options.
+    pub fn with_units(mut self, units: ParserUnits) -> Self {
+        self.units = units;
+        self
+    }
 }
 
 /// A configurable parser for duration strings.
@@ -311,24 +329,6 @@ impl Parser {
             None => Err(Error::UnexpectedUnit(unit.into_owned())),
         }
     }
-
-    // fn get_unit_duration(&self, unit: &str) -> Result<Duration, Error> {
-    //     let unit = if self.options.ignore_case {
-    //         Cow::Owned(unit.to_lowercase())
-    //     } else {
-    //         Cow::Borrowed(unit)
-    //     };
-    //
-    //     match unit.as_ref() {
-    //         "h" | "hr" | "hrs" | "hour" | "hours" => Ok(Duration::from_secs(3600)),
-    //         "m" | "min" | "mins" | "minute" | "minutes" => Ok(Duration::from_secs(60)),
-    //         "s" | "sec" | "secs" | "second" | "seconds" => Ok(Duration::from_secs(1)),
-    //         "ms" | "msec" | "msecs" | "millisecond" | "milliseconds" => {
-    //             Ok(Duration::from_millis(1))
-    //         }
-    //         _ => Err(Error::UnexpectedUnit(unit.into_owned())),
-    //     }
-    // }
 }
 
 /// Parses a duration string into a `std::time::Duration`.

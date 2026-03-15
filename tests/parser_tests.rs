@@ -54,10 +54,7 @@ fn test_parsing_case_sensitivity() {
     let d = parser.parse("1 min 2 seC");
     assert_eq!(d, Err(Error::UnexpectedUnit("seC".to_owned())));
 
-    let parser = Parser::new(ParserOptions {
-        ignore_case: true,
-        ..Default::default()
-    });
+    let parser = Parser::new(ParserOptions::default().ignore_case(true));
 
     let d = parser.parse("1 min 2 sec");
     assert_eq!(d, Ok(Duration::from_secs(62)));
@@ -76,10 +73,7 @@ fn test_parsing_case_sensitivity() {
 fn test_parsing_custom_units() {
     let mut units = ParserUnits::default();
     units.add_unit("day", Duration::from_secs(3600) * 24);
-    let parser = Parser::new(ParserOptions {
-        units,
-        ..Default::default()
-    });
+    let parser = Parser::new(ParserOptions::default().with_units(units));
 
     let d = parser.parse("1 day");
     assert_eq!(d, Ok(Duration::from_secs(3600) * 24));
