@@ -21,6 +21,9 @@ let dur = parse("1hr 2min 3sec");
 assert_eq!(dur, Ok(Duration::from_secs(3723)));
 ```
 
+Empty input, or input containing only whitespace and commas, returns
+[`Duration::ZERO`].
+
 ### The `Parser` struct
 
 For more control, you can use the [`Parser`] struct directly. For example, you can
@@ -291,6 +294,9 @@ impl Parser {
 
     /// Parses a string into a `Duration`, ignoring whitespaces and commas.
     ///
+    /// Empty input, or input containing only whitespace and commas, returns
+    /// [`Duration::ZERO`].
+    ///
     /// Default Units
     /// - `ms`, `msec(s)`, `millisecond(s)`
     /// - `s`, `sec(s)`, `second(s)`
@@ -355,6 +361,9 @@ impl Parser {
 /// This function provides a quick and easy way to parse common duration
 /// formats. It is a convenience wrapper around a default [`Parser`], which is
 /// case-sensitive and ignores whitespace and commas.
+///
+/// Empty input, or input containing only whitespace and commas, returns
+/// [`Duration::ZERO`].
 ///
 /// For more control over parsing behavior, such as enabling case-insensitivity,
 /// construct a [`Parser`] with custom [`ParserOptions`].

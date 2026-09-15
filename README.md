@@ -29,6 +29,8 @@ let dur = parse("1hr 2min 3sec");
 assert_eq!(dur, Ok(Duration::from_secs(3723)));
 ```
 
+Empty input, or input containing only whitespace and commas, returns `Duration::ZERO`.
+
 For more control, you can use the `Parser` struct directly. For example, you can lowercase parsed unit tokens before they are looked up:
 
 ```rust
