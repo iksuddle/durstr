@@ -83,6 +83,9 @@ pub enum Error {
     /// A number was too large.
     #[error("number was too large: {0}")]
     Overflow(String),
+    /// A duration was too large.
+    #[error("duration was too large")]
+    DurationOverflow,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -311,7 +314,11 @@ impl Parser {
                 _ => return Err(Error::ExpectedUnit),
             };
 
-            dur += num * self.get_unit_duration(unit)?;
+            let unit_duration = self.get_unit_duration(unit)?;
+            let component = unit_duration
+                .checked_mul(num)
+                .ok_or(Error::DurationOverflow)?;
+            dur = dur.checked_add(component).ok_or(Error::DurationOverflow)?;
         }
 
         Ok(dur)
