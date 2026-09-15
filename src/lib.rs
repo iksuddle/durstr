@@ -10,7 +10,7 @@ struct for more control over parsing behavior.
 
 The [`parse`] function is a convenience wrapper around a default [`Parser`].
 
-```rust
+```
 use durstr::parse;
 use std::time::Duration;
 
@@ -25,7 +25,7 @@ assert_eq!(dur, Ok(Duration::from_secs(3723)));
 
 For more control, you can use the [`Parser`] struct directly. For example, to parse with case-insensitivity:
 
-```rust
+```
 use durstr::{Parser, ParserOptions};
 use std::time::Duration;
 
@@ -49,7 +49,7 @@ By default, the following units are provided:
 
 You can define your own units, and their values, using the `ParserUnits` struct:
 
-```rust
+```
 use durstr::{Parser, ParserOptions, ParserUnits};
 use std::time::Duration;
 
@@ -163,7 +163,7 @@ impl<'a> Scanner<'a> {
 /// Used to customize the parser's units and their values.
 ///
 /// ## Example
-/// ```rust
+/// ```
 /// use durstr::{Parser, ParserOptions, ParserUnits};
 /// use std::time::Duration;
 ///
@@ -194,7 +194,7 @@ impl ParserUnits {
     /// Insert/update a unit and its value.
     ///
     /// For example, to add a unit 'day' with a duration of 24 hours:
-    /// ```rust
+    /// ```
     /// use durstr::ParserUnits;
     /// use std::time::Duration;
     ///
