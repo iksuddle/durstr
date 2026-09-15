@@ -29,7 +29,7 @@ let dur = parse("1hr 2min 3sec");
 assert_eq!(dur, Ok(Duration::from_secs(3723)));
 ```
 
-For more control, you can use the `Parser` struct directly. For example, to parse with case-insensitivity:
+For more control, you can use the `Parser` struct directly. For example, you can lowercase parsed unit tokens before they are looked up:
 
 ```rust
 use durstr::{Parser, ParserOptions};
@@ -39,6 +39,8 @@ let parser = Parser::new(ParserOptions::default().ignore_case(true));
 let dur = parser.parse("1 MINUTE, 2 SECONDS");
 assert_eq!(dur, Ok(Duration::from_secs(62)));
 ```
+
+`ignore_case(true)` lowercases each unit token from the input before looking it up. It does not change unit names stored in `ParserUnits`, so custom units must be added with lowercase names to match differently-cased input.
 
 ## Units
 

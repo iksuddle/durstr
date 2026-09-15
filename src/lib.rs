@@ -23,7 +23,8 @@ assert_eq!(dur, Ok(Duration::from_secs(3723)));
 
 ### The `Parser` struct
 
-For more control, you can use the [`Parser`] struct directly. For example, to parse with case-insensitivity:
+For more control, you can use the [`Parser`] struct directly. For example, you can
+lowercase parsed unit tokens before they are looked up:
 
 ```
 use durstr::{Parser, ParserOptions};
@@ -35,6 +36,10 @@ let parser = Parser::new(options);
 let dur = parser.parse("1 MINUTE, 2 SECONDS");
 assert_eq!(dur, Ok(Duration::from_secs(62)));
 ```
+
+[`ParserOptions::ignore_case`] lowercases each unit token from the input before
+looking it up. It does not change unit names stored in [`ParserUnits`], so custom
+units must be added with lowercase names to match differently-cased input.
 
 ## Units
 
@@ -193,6 +198,10 @@ impl ParserUnits {
 
     /// Insert/update a unit and its value.
     ///
+    /// Unit names are stored unchanged. When [`ParserOptions::ignore_case`] is
+    /// enabled, use a lowercase name if this unit should match differently-cased
+    /// input.
+    ///
     /// For example, to add a unit 'day' with a duration of 24 hours:
     /// ```
     /// use durstr::ParserUnits;
@@ -249,7 +258,10 @@ pub struct ParserOptions {
 }
 
 impl ParserOptions {
-    /// Enable the ignore_case flag for these options.
+    /// Configure whether parsed unit tokens are lowercased before lookup.
+    ///
+    /// This does not change unit names stored in [`ParserUnits`]. Custom units
+    /// must be added with lowercase names to match differently-cased input.
     pub fn ignore_case(mut self, ignore: bool) -> Self {
         self.ignore_case = ignore;
         self
