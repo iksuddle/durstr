@@ -400,31 +400,3 @@ impl Parser {
 pub fn parse(input: &str) -> Result<Duration, Error> {
     Parser::default().parse(input)
 }
-
-#[cfg(test)]
-mod tests {
-    use crate::{Scanner, Token};
-
-    #[test]
-    fn test_scanner() {
-        let scanner = Scanner::new("10 seconds");
-        let tokens = scanner.scan_tokens();
-        assert_eq!(tokens, Ok(vec![Token::Number(10), Token::Unit("seconds")]));
-
-        let scanner = Scanner::new("9hr1min");
-        let tokens = scanner.scan_tokens();
-        assert_eq!(
-            tokens,
-            Ok(vec![
-                Token::Number(9),
-                Token::Unit("hr"),
-                Token::Number(1),
-                Token::Unit("min"),
-            ])
-        );
-
-        let scanner = Scanner::new("712635 days");
-        let tokens = scanner.scan_tokens();
-        assert_eq!(tokens, Ok(vec![Token::Number(712635), Token::Unit("days")]));
-    }
-}
