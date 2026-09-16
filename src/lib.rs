@@ -62,7 +62,7 @@ use durstr::{Parser, ParserOptions, ParserUnits};
 use std::time::Duration;
 
 let mut units = ParserUnits::default();
-units.add_unit("days", Duration::from_secs(3600) * 24);
+units.add_unit("days", Duration::from_secs(3600) * 24).expect("only ASCII");
 
 let parser = Parser::new(ParserOptions::default().with_units(units));
 
@@ -73,7 +73,7 @@ assert_eq!(d, Ok(Duration::from_secs(3600) * 24 * 4));
 
 use std::{borrow::Cow, collections::HashMap, iter::Peekable, str::CharIndices, time::Duration};
 
-/// An error that can occur when parsing a duration string.
+/// An error that can occur when parsing a duration string or adding a unit.
 #[derive(thiserror::Error, Debug, PartialEq)]
 pub enum Error {
     /// An unexpected character was found.
@@ -94,6 +94,9 @@ pub enum Error {
     /// A duration was too large.
     #[error("duration was too large")]
     DurationOverflow,
+    /// A unit name was empty or contained characters other than ASCII letters.
+    #[error("invalid unit: {0}; expected ASCII characters only")]
+    InvalidUnit(String),
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -176,7 +179,7 @@ impl<'a> Scanner<'a> {
 /// use std::time::Duration;
 ///
 /// let mut units = ParserUnits::default();
-/// units.add_unit("days", Duration::from_secs(3600) * 24);
+/// units.add_unit("days", Duration::from_secs(3600) * 24).expect("only ASCII");
 ///
 /// let parser = Parser::new(ParserOptions::default().with_units(units));
 ///
@@ -201,6 +204,9 @@ impl ParserUnits {
 
     /// Insert/update a unit and its value.
     ///
+    /// Returns [`Error::InvalidUnit`] if the name is empty or contains non-ASCII
+    /// characters.
+    ///
     /// Unit names are stored unchanged. When [`ParserOptions::ignore_case`] is
     /// enabled, use a lowercase name if this unit should match differently-cased
     /// input.
@@ -211,10 +217,18 @@ impl ParserUnits {
     /// use std::time::Duration;
     ///
     /// let mut units = ParserUnits::default();
-    /// units.add_unit("day", Duration::from_secs(3600) * 24);
+    /// units.add_unit("day", Duration::from_secs(3600) * 24).unwrap();
     /// ```
-    pub fn add_unit(&mut self, k: impl Into<String>, v: Duration) {
-        self.values.insert(k.into(), v);
+    pub fn add_unit(&mut self, k: impl Into<String>, v: Duration) -> Result<(), Error> {
+        let unit = k.into();
+
+        if unit.is_empty() || !unit.bytes().all(|b| b.is_ascii_alphabetic()) {
+            return Err(Error::InvalidUnit(unit));
+        }
+
+        self.values.insert(unit, v);
+
+        Ok(())
     }
 
     fn get_duration(&self, k: &str) -> Option<&Duration> {
@@ -234,16 +248,16 @@ impl Default for ParserUnits {
         let mut parser_units = ParserUnits::new();
 
         for u in ["h", "hr", "hrs", "hour", "hours"] {
-            parser_units.add_unit(u, Duration::from_secs(3600));
+            let _ = parser_units.add_unit(u, Duration::from_secs(3600));
         }
         for u in ["m", "min", "mins", "minute", "minutes"] {
-            parser_units.add_unit(u, Duration::from_secs(60));
+            let _ = parser_units.add_unit(u, Duration::from_secs(60));
         }
         for u in ["s", "sec", "secs", "second", "seconds"] {
-            parser_units.add_unit(u, Duration::from_secs(1));
+            let _ = parser_units.add_unit(u, Duration::from_secs(1));
         }
         for u in ["ms", "msec", "msecs", "millisecond", "milliseconds"] {
-            parser_units.add_unit(u, Duration::from_millis(1));
+            let _ = parser_units.add_unit(u, Duration::from_millis(1));
         }
 
         parser_units

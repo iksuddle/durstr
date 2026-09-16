@@ -56,12 +56,15 @@ By default, the following units are provided:
 | Hour        | `h`, `hr(s)`, `hour(s)`            |
 
 You can define your own units, and their values, using the `ParserUnits` struct:
+
+Unit names must be nonempty ASCII letters; `add_unit` will err otherwise.
+
 ```rust
 use durstr::{Parser, ParserOptions, ParserUnits};
 use std::time::Duration;
 
 let mut units = ParserUnits::default();
-units.add_unit("days", Duration::from_secs(3600) * 24);
+units.add_unit("days", Duration::from_secs(3600) * 24).expect("only ASCII");
 
 let parser = Parser::new(ParserOptions::default().with_units(units));
 
