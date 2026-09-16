@@ -10,8 +10,7 @@ A simple library for parsing human-readable duration strings into `std::time::Du
 Add `durstr` to `Cargo.toml`:
 
 ```toml
-[dependencies]
-durstr = "0.5.0"
+cargo add durstr
 ```
 
 This library provides a `parse` function for quick and easy parsing, and a `Parser` struct for more control over parsing behavior.

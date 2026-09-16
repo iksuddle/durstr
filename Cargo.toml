@@ -1,6 +1,6 @@
 [package]
 name = "durstr"
-version = "0.5.1"
+version = "0.6.0"
 authors = ["Ismail Suddle <iksuddle@gmail.com>"]
 edition = "2024"
 description = "A simple library for parsing human-readable strings into durations."
