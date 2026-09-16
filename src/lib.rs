@@ -140,7 +140,7 @@ impl<'a> Scanner<'a> {
     }
 
     fn should_skip(&self, c: char) -> bool {
-        c.is_ascii_whitespace() || c == ','
+        c.is_whitespace() || c == ','
     }
 
     fn scan_number(&mut self, start: usize) -> Result<u32, Error> {
