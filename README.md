@@ -9,7 +9,7 @@ A simple library for parsing human-readable duration strings into `std::time::Du
 
 Add `durstr` to `Cargo.toml`:
 
-```toml
+```sh
 cargo add durstr
 ```
 
